@@ -3,10 +3,10 @@ package it.unina.BugBoard26_backend_SL.entity;
 import it.unina.BugBoard26_backend_SL.entity.enums.IssueState;
 import it.unina.BugBoard26_backend_SL.entity.enums.IssueType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "issues")
@@ -16,29 +16,44 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Issue {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(nullable = false)
-	private String title;
+    @Column(nullable = false)
+    private String title;
 
-	@Column(columnDefinition = "TEXT")
-	private String description;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private IssueType type;
+    @Column(name = "is_urgent")
+    private Boolean isUrgent; 
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private IssueState state;
+	//Per ora, manca l'immagine
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "reporter_email", nullable = false)
-	private User reporter;
+    
+    @Column(name = "creation_date", updatable = false)
+    @Builder.Default 
+    private LocalDateTime creationDate = LocalDateTime.now();
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "tag_id", nullable = false)
-	private Tag tag;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private IssueType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private IssueState state;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporter_id", nullable = false) // Meglio collegare per ID, non per email come PK
+    private User reporter;
+
+    
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "issue_tags",
+        joinColumns = @JoinColumn(name = "issue_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags;
 }

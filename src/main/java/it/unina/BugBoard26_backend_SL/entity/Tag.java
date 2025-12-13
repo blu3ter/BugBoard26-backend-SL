@@ -1,11 +1,8 @@
 package it.unina.BugBoard26_backend_SL.entity;
 
-import it.unina.BugBoard26_backend_SL.entity.enums.IssueState;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 
 @Entity
@@ -16,20 +13,17 @@ import java.util.List;
 @Builder
 public class Tag {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, unique = true)
-	private IssueState state; // canonical issue state
+    @Column(nullable = false, unique = true)
+    private String name; // Nel diagramma si chiama 'name', nel tuo codice 'label'. Meglio 'name'.
 
-	@Column(nullable = false)
-	private String label; // human-friendly label
+    @Column(length = 7)
+    private String color; // Nel diagramma è 'color'. Esempio: #FF0000
 
-	@Column(length = 7)
-	private String colorHex; // e.g. #FFCC00
-
-	@OneToMany(mappedBy = "tag", fetch = FetchType.LAZY)
-	private List<Issue> issues;
+    // Relazione ManyToMany inversa (opzionale, ma utile se vuoi sapere quali issue ha un tag)
+    @ManyToMany(mappedBy = "tags")
+    private List<Issue> issues;
 }
