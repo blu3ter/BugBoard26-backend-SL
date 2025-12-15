@@ -1,21 +1,9 @@
 package it.unina.BugBoard26_backend_SL.entity;
 
-import jakarta.persistence.*;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 import it.unina.BugBoard26_backend_SL.entity.enums.Role;
-
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -23,21 +11,34 @@ import it.unina.BugBoard26_backend_SL.entity.enums.Role;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class User {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String password;    
 
-    @Enumerated(EnumType.STRING) //Tool for enumeration
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-    @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    //Issue reported by this user
+    @OneToMany(mappedBy = "reporter", fetch = FetchType.LAZY)
+    @ToString.Exclude // Avoid circular references in toString
     private List<Issue> reportedIssues;
+    
+    // Issue assigned to this user
+    @OneToMany(mappedBy = "assignee", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Issue> assignedIssues;
 
+    // Method helper
+    public void assignIssue(Issue issue) {
+        issue.assignTo(this);
+    }
 }
