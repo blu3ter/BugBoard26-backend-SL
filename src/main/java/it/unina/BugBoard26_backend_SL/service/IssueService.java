@@ -10,6 +10,7 @@ import it.unina.BugBoard26_backend_SL.repository.TagRepository;
 import it.unina.BugBoard26_backend_SL.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -84,6 +85,7 @@ public class IssueService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public Issue assignTo(Long issueId, Long userId) {
         Issue issue = issueRepository.findById(issueId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
