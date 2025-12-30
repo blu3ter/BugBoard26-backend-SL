@@ -1,7 +1,6 @@
 package it.unina.BugBoard26_backend_SL.controller;
 
 import it.unina.BugBoard26_backend_SL.dto.TagDto;
-import it.unina.BugBoard26_backend_SL.entity.Tag;
 import it.unina.BugBoard26_backend_SL.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +11,6 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/tags")
@@ -24,46 +22,31 @@ public class TagController {
 
     @GetMapping
     public ResponseEntity<List<TagDto>> list() {
-        List<Tag> tags = tagService.findAll();
-        List<TagDto> dtos = tags.stream().map(this::toDto).collect(Collectors.toList());
+        List<TagDto> dtos = tagService.findAllDto();
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TagDto> get(@PathVariable Long id) {
-        Tag t = tagService.findById(id).orElseThrow(NoSuchElementException::new);
-        return ResponseEntity.ok(toDto(t));
+        TagDto dto = tagService.findByIdDto(id);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping
     public ResponseEntity<TagDto> create(@Valid @RequestBody TagDto dto) {
-        Tag t = new Tag();
-        t.setName(dto.getName());
-        t.setColour(dto.getColour());
-        Tag saved = tagService.save(t);
-        return ResponseEntity.created(URI.create("/tags/" + saved.getId())).body(toDto(saved));
+        TagDto saved = tagService.create(dto);
+        return ResponseEntity.created(URI.create("/tags/" + saved.getId())).body(saved);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TagDto> update(@PathVariable Long id, @Valid @RequestBody TagDto dto) {
-        Tag existing = tagService.findById(id).orElseThrow(NoSuchElementException::new);
-        existing.setName(dto.getName());
-        existing.setColour(dto.getColour());
-        Tag saved = tagService.save(existing);
-        return ResponseEntity.ok(toDto(saved));
+        TagDto updated = tagService.update(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         tagService.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private TagDto toDto(Tag t) {
-        TagDto d = new TagDto();
-        d.setId(t.getId());
-        d.setName(t.getName());
-        d.setColour(t.getColour());
-        return d;
     }
 }
