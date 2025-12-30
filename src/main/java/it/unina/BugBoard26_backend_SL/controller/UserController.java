@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
-public class AuthController {
+public class UserController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
