@@ -21,9 +21,9 @@ public class IssueDto {
     private String state;
     private Long reporterId;
     private String reporterEmail;
+    private String reporterFullName;
     private Long assigneeId;
     private String assigneeEmail;
+    private String assigneeFullName;
     private List<String> tags;
-
-    
 }

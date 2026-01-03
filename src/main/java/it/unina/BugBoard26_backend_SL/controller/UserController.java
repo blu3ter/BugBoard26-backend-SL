@@ -1,8 +1,8 @@
 package it.unina.BugBoard26_backend_SL.controller;
 
-import it.unina.BugBoard26_backend_SL.dto.LoginRequest;
-import it.unina.BugBoard26_backend_SL.dto.LoginResponse;
-import it.unina.BugBoard26_backend_SL.dto.RegisterRequest;
+import it.unina.BugBoard26_backend_SL.dto.LoginRequestDto;
+import it.unina.BugBoard26_backend_SL.dto.LoginResponseDto;
+import it.unina.BugBoard26_backend_SL.dto.RegisterRequestDto;
 import it.unina.BugBoard26_backend_SL.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +20,9 @@ public class UserController {
 
     // 1. LOGIN
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequest) {
         try {
-            LoginResponse response = userService.login(loginRequest);
+            LoginResponseDto response = userService.login(loginRequest);
             return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -35,7 +35,7 @@ public class UserController {
 
     // 2. REGISTER
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequestDto registerRequest) {
         try {
             userService.register(registerRequest);
             return ResponseEntity.status(HttpStatus.CREATED)

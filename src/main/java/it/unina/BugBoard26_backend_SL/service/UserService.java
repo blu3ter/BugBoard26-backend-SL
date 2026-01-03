@@ -1,8 +1,8 @@
 package it.unina.BugBoard26_backend_SL.service;
 
-import it.unina.BugBoard26_backend_SL.dto.LoginRequest;
-import it.unina.BugBoard26_backend_SL.dto.LoginResponse;
-import it.unina.BugBoard26_backend_SL.dto.RegisterRequest;
+import it.unina.BugBoard26_backend_SL.dto.LoginRequestDto;
+import it.unina.BugBoard26_backend_SL.dto.LoginResponseDto;
+import it.unina.BugBoard26_backend_SL.dto.RegisterRequestDto;
 import it.unina.BugBoard26_backend_SL.entity.User;
 import it.unina.BugBoard26_backend_SL.entity.enums.Role;
 import it.unina.BugBoard26_backend_SL.repository.UserRepository;
@@ -57,7 +57,7 @@ public class UserService {
     }
 
     // --- Business logic moved from controller: authentication, registration, token verification
-    public LoginResponse login(LoginRequest request) throws BadCredentialsException, NoSuchElementException {
+    public LoginResponseDto login(LoginRequestDto request) throws BadCredentialsException, NoSuchElementException {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
@@ -65,11 +65,11 @@ public class UserService {
         String token = jwtUtility.generateToken(request.getEmail());
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(NoSuchElementException::new);
 
-        return new LoginResponse(token, request.getEmail(), user != null ? user.getRole().name() : Role.USER.name());
+        return new LoginResponseDto(token, request.getEmail(), user != null ? user.getRole().name() : Role.USER.name());
     }
 
     @Transactional
-    public void register(RegisterRequest request) {
+    public void register(RegisterRequestDto request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalStateException("Email già registrata");
         }

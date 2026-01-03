@@ -69,6 +69,11 @@ public class Issue {
     )
     @ToString.Exclude
     private List<Tag> tags;
+    
+    @OneToMany(mappedBy = "issue", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Comment> comments;
 
     
 

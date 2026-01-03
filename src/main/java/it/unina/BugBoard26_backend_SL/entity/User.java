@@ -50,6 +50,11 @@ public class User {
     @ToString.Exclude
     private List<Issue> assignedIssues;
 
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Comment> comments;
+
     // Method helper
     public void assignIssue(Issue issue) {
         issue.assignTo(this);

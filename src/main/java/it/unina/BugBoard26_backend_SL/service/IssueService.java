@@ -222,10 +222,12 @@ public class IssueService {
         if (i.getReporter() != null) {
             dto.setReporterId(i.getReporter().getId());
             dto.setReporterEmail(i.getReporter().getEmail());
+            dto.setReporterFullName(i.getReporter().getFullName());
         }
         if (i.getAssignee() != null) {
             dto.setAssigneeId(i.getAssignee().getId());
             dto.setAssigneeEmail(i.getAssignee().getEmail());
+            dto.setAssigneeFullName(i.getAssignee().getFullName());
         }
         if (i.getTags() != null) {
             dto.setTags(i.getTags().stream().map(Tag::getName).collect(Collectors.toList()));

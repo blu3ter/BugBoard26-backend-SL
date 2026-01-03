@@ -9,6 +9,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Essenziale per il Login e per il Token JWT
     Optional<User> findByEmail(String email);
     
-    // Utile per non creare duplicati in fase di registrazione
-    boolean existsByEmail(String email);
+
 }
