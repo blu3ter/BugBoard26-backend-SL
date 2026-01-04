@@ -1,5 +1,6 @@
 package it.unina.BugBoard26_backend_SL.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import it.unina.BugBoard26_backend_SL.dto.IssueAssignDto;
 import it.unina.BugBoard26_backend_SL.dto.IssueCreateDto;
 import it.unina.BugBoard26_backend_SL.dto.IssueDto;
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/issues")
 @Validated
+@Slf4j
 public class IssueController {
 
     @Autowired
@@ -41,8 +43,10 @@ public class IssueController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<IssueDto> create(@Valid @RequestPart("data") IssueCreateDto dto,
                                            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+        log.info("Ricevuta richiesta creazione issue: {}", dto);
         byte[] imgBytes = (image != null && !image.isEmpty()) ? image.getBytes() : null;
         IssueDto saved = issueService.createIssue(dto, imgBytes);
+        log.info("Issue creata con successo: {}", saved.getId());
         return ResponseEntity.created(URI.create("/issues/" + saved.getId())).body(saved);
     }
 

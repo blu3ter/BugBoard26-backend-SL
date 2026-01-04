@@ -1,5 +1,6 @@
 package it.unina.BugBoard26_backend_SL.service;
 
+import lombok.extern.slf4j.Slf4j;
 import it.unina.BugBoard26_backend_SL.dto.IssueCreateDto;
 import it.unina.BugBoard26_backend_SL.dto.IssueDto;
 import it.unina.BugBoard26_backend_SL.dto.IssueUpdateDto;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
  * Centralizza mapping DTO <-> Entity, orchestrazione Tag/User e transazioni.
  */
 @Service
+@Slf4j
 public class IssueService {
 
     @Autowired
@@ -82,6 +84,7 @@ public class IssueService {
 
     @Transactional
     public IssueDto createIssue(IssueCreateDto dto, byte[] imageBytes) {
+        log.debug("Inizio creazione issue nel service per reporterId: {}", dto.getReporterId());
         Issue i = new Issue();
         i.setTitle(dto.getTitle());
         i.setDescription(dto.getDescription());
@@ -89,7 +92,11 @@ public class IssueService {
         i.setType(dto.getType());
 
         // reporter (obbligatorio)
-        User reporter = userRepository.findById(dto.getReporterId()).orElseThrow(NoSuchElementException::new);
+        User reporter = userRepository.findById(dto.getReporterId())
+                .orElseThrow(() -> {
+                    log.error("Reporter non trovato con ID: {}", dto.getReporterId());
+                    return new NoSuchElementException("Reporter non trovato");
+                });
         i.setReporter(reporter);
 
         // assignee opzionale
