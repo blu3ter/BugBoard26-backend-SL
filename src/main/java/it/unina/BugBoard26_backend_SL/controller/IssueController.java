@@ -34,6 +34,16 @@ public class IssueController {
         return ResponseEntity.ok(dtos);
     }
 
+    /**
+     * Endpoint per ottenere le issue assegnate all'utente attualmente autenticato.
+     * URL: GET /issues/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<List<IssueDto>> myIssues() {
+        List<IssueDto> dtos = issueService.findByAssigneeCurrentUser();
+        return ResponseEntity.ok(dtos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<IssueDto> get(@PathVariable Long id) {
         IssueDto dto = issueService.findByIdDto(id);

@@ -16,6 +16,9 @@ import it.unina.BugBoard26_backend_SL.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -82,6 +85,21 @@ public class IssueService {
         return findByTagName(tagName).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    /**
+     * Restituisce le issue assegnate all'utente attualmente autenticato.
+     * Usa SecurityContextHolder per recuperare l'email dell'utente corrente,
+     * poi cerca l'entity User e infine le issue via repository.
+     */
+    public List<IssueDto> findByAssigneeCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new NoSuchElementException("Utente non autenticato");
+        }
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("Utente non trovato: " + email));
+        return issueRepository.findByAssignee_Id(user.getId()).stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Transactional
     public IssueDto createIssue(IssueCreateDto dto, byte[] imageBytes) {
         log.debug("Inizio creazione issue nel service per reporterId: {}", dto.getReporterId());
@@ -99,8 +117,14 @@ public class IssueService {
                 });
         i.setReporter(reporter);
 
-        // assignee opzionale
+        // assignee opzionale: consentito solo agli ADMIN
         if (dto.getAssigneeId() != null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (!isAdmin) {
+                throw new AccessDeniedException("Solo gli ADMIN possono impostare l'assignee durante la creazione");
+            }
             User a = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
             i.setAssignee(a);
         }
