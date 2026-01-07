@@ -102,24 +102,28 @@ public class IssueService {
 
     @Transactional
     public IssueDto createIssue(IssueCreateDto dto, byte[] imageBytes) {
-        log.debug("Inizio creazione issue nel service per reporterId: {}", dto.getReporterId());
+        log.debug("Inizio creazione issue nel service");
         Issue i = new Issue();
         i.setTitle(dto.getTitle());
         i.setDescription(dto.getDescription());
         i.setIsUrgent(dto.getIsUrgent());
         i.setType(dto.getType());
 
-        // reporter (obbligatorio)
-        User reporter = userRepository.findById(dto.getReporterId())
+        // reporter: ricavato dall'utente autenticato (token JWT)
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new NoSuchElementException("Utente non autenticato");
+        }
+        String email = auth.getName();
+        User reporter = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.error("Reporter non trovato con ID: {}", dto.getReporterId());
+                    log.error("Reporter non trovato per email: {}", email);
                     return new NoSuchElementException("Reporter non trovato");
                 });
         i.setReporter(reporter);
 
         // assignee opzionale: consentito solo agli ADMIN
         if (dto.getAssigneeId() != null) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             boolean isAdmin = auth != null && auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             if (!isAdmin) {

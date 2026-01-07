@@ -24,12 +24,10 @@ public class IssueCreateDto {
     @NotNull
     private IssueType type;
 
-    @NotNull
-    private Long reporterId;
+    // reporterId rimosso: il backend ricava il reporter dall'utente autenticato (token JWT)
 
     private Long assigneeId;
 
     private List<String> tagNames;
 
-   
 }

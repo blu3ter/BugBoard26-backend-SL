@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -53,7 +54,7 @@ public class IssueController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<IssueDto> create(@Valid @RequestPart("data") IssueCreateDto dto,
                                            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
-        log.info("Ricevuta richiesta creazione issue: {}", dto);
+        log.info("Ricevuta richiesta creazione issue da utente autenticato: {}", SecurityContextHolder.getContext().getAuthentication() != null ? SecurityContextHolder.getContext().getAuthentication().getName() : "anonymous");
         byte[] imgBytes = (image != null && !image.isEmpty()) ? image.getBytes() : null;
         IssueDto saved = issueService.createIssue(dto, imgBytes);
         log.info("Issue creata con successo: {}", saved.getId());
