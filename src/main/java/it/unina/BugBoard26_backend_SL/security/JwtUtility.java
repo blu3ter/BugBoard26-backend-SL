@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -13,16 +14,15 @@ import java.util.function.Function;
 @Component
 public class JwtUtility {
 
-    // CHIAVE SEGRETA: In un progetto vero va in application.properties!
-    // Deve essere lunga almeno 256 bit (32 caratteri) per l'algoritmo HS256.
-    private static final String SECRET = "PasswordHashataPerJWTCheDeveEssereMoltoLunga!Infattiverràcriptata."; 
+    @Value("${jwt.secret}")
+    private String secret;
 
-    // Durata del token: 1 ora (in millisecondi)
-    private static final long EXPIRATION_TIME = 3600000; 
+    @Value("${jwt.expiration}")
+    private long expirationTime;
 
     // Genera la chiave crittografica partendo dalla stringa segreta
     private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(java.util.Base64.getEncoder().encodeToString(SECRET.getBytes()));
+        byte[] keyBytes = Decoders.BASE64.decode(java.util.Base64.getEncoder().encodeToString(secret.getBytes()));
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -31,7 +31,7 @@ public class JwtUtility {
         return Jwts.builder()
                 .subject(email) // Il "Soggetto" del token è l'email
                 .issuedAt(new Date(System.currentTimeMillis())) // Data creazione
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // Scadenza
+                .expiration(new Date(System.currentTimeMillis() + expirationTime)) // Scadenza
                 .signWith(getSignInKey()) // Firma con la chiave segreta
                 .compact();
     }
