@@ -65,7 +65,7 @@ public class UserService {
         String token = jwtUtility.generateToken(request.getEmail());
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(NoSuchElementException::new);
 
-        return new LoginResponseDto(token, request.getEmail(), user != null ? user.getRole().name() : Role.USER.name());
+        return new LoginResponseDto(token, request.getEmail(), user != null ? user.getRole().name() : Role.USER.name(), user != null ? user.getFirstName() : "");
     }
 
     @Transactional
