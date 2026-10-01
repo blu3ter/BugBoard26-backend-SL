@@ -51,20 +51,23 @@ public class IssueController {
         return ResponseEntity.ok(dto);
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @PostMapping(consumes = { "multipart/form-data" })
     public ResponseEntity<IssueDto> create(@Valid @RequestPart("data") IssueCreateDto dto,
-                                           @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
-        log.info("Ricevuta richiesta creazione issue da utente autenticato: {}", SecurityContextHolder.getContext().getAuthentication() != null ? SecurityContextHolder.getContext().getAuthentication().getName() : "anonymous");
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+        log.info("Ricevuta richiesta creazione issue da utente autenticato: {}",
+                SecurityContextHolder.getContext().getAuthentication() != null
+                        ? SecurityContextHolder.getContext().getAuthentication().getName()
+                        : "anonymous");
         byte[] imgBytes = (image != null && !image.isEmpty()) ? image.getBytes() : null;
         IssueDto saved = issueService.createIssue(dto, imgBytes);
         log.info("Issue creata con successo: {}", saved.getId());
         return ResponseEntity.created(URI.create("/issues/" + saved.getId())).body(saved);
     }
 
-    @PutMapping(path = "/{id}", consumes = {"multipart/form-data"})
+    @PutMapping(path = "/{id}", consumes = { "multipart/form-data" })
     public ResponseEntity<IssueDto> update(@PathVariable Long id,
-                                           @Valid @RequestPart("data") IssueUpdateDto dto,
-                                           @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+            @Valid @RequestPart("data") IssueUpdateDto dto,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
         byte[] imgBytes = (image != null && !image.isEmpty()) ? image.getBytes() : null;
         IssueDto updated = issueService.updateIssue(id, dto, imgBytes);
         return ResponseEntity.ok(updated);
