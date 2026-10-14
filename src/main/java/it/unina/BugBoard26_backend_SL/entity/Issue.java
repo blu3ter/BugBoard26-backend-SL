@@ -12,6 +12,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "issues")
+@org.hibernate.annotations.Check(
+    name = "chk_assignee_state",
+    constraints = "assignee_id IS NULL OR state = 'IN_PROGRESS'"
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

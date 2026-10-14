@@ -162,8 +162,16 @@ public class IssueService {
         existing.setType(dto.getType());
 
         if (dto.getAssigneeId() != null) {
-            User a = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
-            existing.setAssignee(a);
+            // Solo gli ADMIN possono assegnare una issue
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (!isAdmin) {
+                throw new AccessDeniedException("Solo gli ADMIN possono assegnare una issue");
+            }
+            User assignee = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
+            // Usa la state machine: TODO -> IN_PROGRESS
+            existing.assignTo(assignee);
         } else {
             existing.setAssignee(null);
         }
