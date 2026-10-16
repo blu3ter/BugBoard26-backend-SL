@@ -90,4 +90,26 @@ public class IssueController {
         IssueDto updated = issueService.closeIssue(id);
         return ResponseEntity.ok(updated);
     }
+
+    /**
+     * Manda la issue in revisione (IN_PROGRESS → IN_REVIEW).
+     * Callable dall'assignee o dall'admin.
+     * URL: POST /issues/{id}/review
+     */
+    @PostMapping("/{id}/review")
+    public ResponseEntity<IssueDto> review(@PathVariable Long id) {
+        IssueDto updated = issueService.sendToReview(id);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Rimanda la issue in lavorazione (IN_REVIEW → IN_PROGRESS).
+     * Riservato agli ADMIN: l'assignee rimane invariato.
+     * URL: POST /issues/{id}/send-back
+     */
+    @PostMapping("/{id}/send-back")
+    public ResponseEntity<IssueDto> sendBack(@PathVariable Long id) {
+        IssueDto updated = issueService.sendBackToProgress(id);
+        return ResponseEntity.ok(updated);
+    }
 }

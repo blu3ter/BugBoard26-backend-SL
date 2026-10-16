@@ -7,8 +7,20 @@ public class InProgressState implements IssueState {
 
     @Override
     public void assign(Issue issue, User user) {
-        // MODIFICA: Invece di riassegnare, lanciamo un'eccezione
-        throw new IllegalStateException("Impossibile riassegnare una issue che è già in lavorazione (In Progress).");
+        throw new IllegalStateException(
+                "Impossibile riassegnare una issue che è già in lavorazione (In Progress).");
+    }
+
+    @Override
+    public void review(Issue issue) {
+        issue.setState(new InReviewState());
+        System.out.println("Transizione: IN_PROGRESS -> IN_REVIEW");
+    }
+
+    @Override
+    public void sendBackToProgress(Issue issue) {
+        throw new IllegalStateException(
+                "La issue è già In Progress, non può essere rimandata indietro.");
     }
 
     @Override
