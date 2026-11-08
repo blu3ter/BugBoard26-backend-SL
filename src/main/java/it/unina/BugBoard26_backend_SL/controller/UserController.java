@@ -3,6 +3,7 @@ package it.unina.BugBoard26_backend_SL.controller;
 import it.unina.BugBoard26_backend_SL.dto.LoginRequestDto;
 import it.unina.BugBoard26_backend_SL.dto.LoginResponseDto;
 import it.unina.BugBoard26_backend_SL.dto.RegisterRequestDto;
+import it.unina.BugBoard26_backend_SL.dto.UserSummaryDto;
 import it.unina.BugBoard26_backend_SL.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,15 +12,23 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/auth")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
+    // 0. ELENCO UTENTI (riservato agli ADMIN: serve per assegnare le issue)
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/users")
+    public ResponseEntity<List<UserSummaryDto>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAllSummaries());
+    }
+
     // 1. LOGIN
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequest) {
         try {
             LoginResponseDto response = userService.login(loginRequest);
@@ -35,7 +44,7 @@ public class UserController {
 
     // 2. REGISTER
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequestDto registerRequest) {
         try {
             userService.register(registerRequest);
@@ -51,7 +60,7 @@ public class UserController {
     }
 
     // 3. VERIFICA TOKEN (opzionale, utile per il frontend)
-    @GetMapping("/verify")
+    @GetMapping("/auth/verify")
     public ResponseEntity<?> verifyToken(@RequestHeader("Authorization") String token) {
         try {
             boolean valid = userService.verifyToken(token);

@@ -17,6 +17,6 @@ public class UserSummaryDto {
 
     // Comodità per il frontend quando si vuole mostrare "Nome Cognome"
     public String getFullName() {
-        return (firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName).trim();
+        return ((firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName)).trim();
     }
 }
