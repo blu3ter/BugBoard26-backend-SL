@@ -1,0 +1,29 @@
+# Build output & Maven wrapper jar
+target/
+build/
+
+# IDE & Sistema Operativo
+.git/
+.gitignore
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Segreti e configurazioni locali (passati tramite variabili d'ambiente in Docker)
+src/main/resources/application-dev.properties
+.env
+.env.*
+
+# Test (esclusi dal build dell'immagine di produzione)
+src/test/
+
+# Documentazione
+README.MD
+HELP.md
+
