@@ -3,6 +3,7 @@ package it.unina.BugBoard26_backend_SL.service;
 import it.unina.BugBoard26_backend_SL.dto.LoginRequestDto;
 import it.unina.BugBoard26_backend_SL.dto.LoginResponseDto;
 import it.unina.BugBoard26_backend_SL.dto.RegisterRequestDto;
+import it.unina.BugBoard26_backend_SL.dto.UserSummaryDto;
 import it.unina.BugBoard26_backend_SL.entity.User;
 import it.unina.BugBoard26_backend_SL.entity.enums.Role;
 import it.unina.BugBoard26_backend_SL.repository.UserRepository;
@@ -36,6 +37,16 @@ public class UserService {
 
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    /**
+     * Restituisce tutti gli utenti come DTO "leggeri" (senza email/password),
+     * usati dal frontend per l'assegnazione e il conteggio delle issue per assigneeId.
+     */
+    public List<UserSummaryDto> findAllSummaries() {
+        return userRepository.findAll().stream()
+                .map(u -> new UserSummaryDto(u.getId(), u.getFirstName(), u.getLastName(), u.getRole().name()))
+                .toList();
     }
 
     public Optional<User> findById(Long id) {

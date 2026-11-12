@@ -12,6 +12,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "issues")
+@org.hibernate.annotations.Check(
+    name = "chk_assignee_state",
+    constraints = "assignee_id IS NULL OR state IN ('IN_PROGRESS', 'IN_REVIEW')"
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -78,11 +82,25 @@ public class Issue {
     
 
     // State transition methods
-    
+
     public void assignTo(User user) {
         this.state.assign(this, user);
     }
 
+    /** IN_PROGRESS → IN_REVIEW: lo sviluppatore sottomette la issue per revisione. */
+    public void sendToReview() {
+        this.state.review(this);
+    }
+
+    /**
+     * IN_REVIEW → IN_PROGRESS: l'admin rifiuta la revisione e rimanda
+     * la issue allo stesso sviluppatore (assignee invariato).
+     */
+    public void sendBackToProgress() {
+        this.state.sendBackToProgress(this);
+    }
+
+    /** → CLOSED: l'admin approva e chiude la issue. */
     public void close() {
         this.state.close(this);
     }

@@ -43,3 +43,7 @@ build/
 ### Environment properties ###
 application-dev.properties
 .env
+### AI tools config ###
+.gemini/
+.github/copilot-instructions.md
+.kilocode/

@@ -162,8 +162,16 @@ public class IssueService {
         existing.setType(dto.getType());
 
         if (dto.getAssigneeId() != null) {
-            User a = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
-            existing.setAssignee(a);
+            // Solo gli ADMIN possono assegnare una issue
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            if (!isAdmin) {
+                throw new AccessDeniedException("Solo gli ADMIN possono assegnare una issue");
+            }
+            User assignee = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
+            // Usa la state machine: TODO -> IN_PROGRESS
+            existing.assignTo(assignee);
         } else {
             existing.setAssignee(null);
         }
@@ -206,9 +214,57 @@ public class IssueService {
 
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public IssueDto closeIssue(Long issueId) {
         Issue issue = issueRepository.findById(issueId).orElseThrow(NoSuchElementException::new);
         issue.close();
+        Issue saved = issueRepository.save(issue);
+        return toDto(saved);
+    }
+
+    /**
+     * Manda la issue in revisione (IN_PROGRESS → IN_REVIEW).
+     * Può essere eseguito solo dall'assignee della issue o da un admin.
+     */
+    @Transactional
+    public IssueDto sendToReview(Long issueId) {
+        Issue issue = issueRepository.findById(issueId).orElseThrow(NoSuchElementException::new);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new NoSuchElementException("Utente non autenticato");
+        }
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin) {
+            // Verifica che l'utente autenticato sia l'assignee della issue
+            String email = auth.getName();
+            User currentUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new NoSuchElementException("Utente non trovato: " + email));
+
+            if (issue.getAssignee() == null || !issue.getAssignee().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException(
+                        "Solo l'assignee della issue o un admin può mandarla in revisione.");
+            }
+        }
+
+        issue.sendToReview();
+        Issue saved = issueRepository.save(issue);
+        return toDto(saved);
+    }
+
+
+    /**
+     * Rimanda la issue in lavorazione (IN_REVIEW → IN_PROGRESS).
+     * Operazione riservata esclusivamente all'admin.
+     */
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public IssueDto sendBackToProgress(Long issueId) {
+        Issue issue = issueRepository.findById(issueId).orElseThrow(NoSuchElementException::new);
+        issue.sendBackToProgress();
         Issue saved = issueRepository.save(issue);
         return toDto(saved);
     }

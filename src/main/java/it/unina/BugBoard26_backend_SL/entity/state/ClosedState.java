@@ -11,6 +11,18 @@ public class ClosedState implements IssueState {
     }
 
     @Override
+    public void review(Issue issue) {
+        throw new IllegalStateException(
+                "Impossibile mandare in revisione una issue già chiusa.");
+    }
+
+    @Override
+    public void sendBackToProgress(Issue issue) {
+        throw new IllegalStateException(
+                "Impossibile rimandare in lavorazione una issue già chiusa.");
+    }
+
+    @Override
     public void close(Issue issue) {
         // Già chiusa, non fare nulla
     }

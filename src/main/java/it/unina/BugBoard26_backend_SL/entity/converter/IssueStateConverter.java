@@ -19,8 +19,9 @@ public class IssueStateConverter implements AttributeConverter<IssueState, Strin
         
         return switch (dbData) {
             case "IN_PROGRESS" -> new InProgressState();
-            case "CLOSED" -> new ClosedState();
-            default -> new TodoState();
+            case "IN_REVIEW"   -> new InReviewState();
+            case "CLOSED"      -> new ClosedState();
+            default            -> new TodoState();
         };
     }
 }
