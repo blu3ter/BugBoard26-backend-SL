@@ -26,4 +26,5 @@ public class IssueDto {
     private String assigneeEmail;
     private String assigneeFullName;
     private List<String> tags;
+    private Long commentsCount;
 }

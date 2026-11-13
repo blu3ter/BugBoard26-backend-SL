@@ -10,6 +10,7 @@ import it.unina.BugBoard26_backend_SL.entity.Tag;
 import it.unina.BugBoard26_backend_SL.entity.User;
 import it.unina.BugBoard26_backend_SL.entity.enums.IssueType;
 import it.unina.BugBoard26_backend_SL.entity.state.IssueState;
+import it.unina.BugBoard26_backend_SL.repository.CommentRepository;
 import it.unina.BugBoard26_backend_SL.repository.IssueRepository;
 import it.unina.BugBoard26_backend_SL.repository.TagRepository;
 import it.unina.BugBoard26_backend_SL.repository.UserRepository;
@@ -22,7 +23,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,6 +46,9 @@ public class IssueService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     // --- Query oriented (Entity) ---
 
@@ -73,7 +79,7 @@ public class IssueService {
     // --- DTO-oriented API used by Controller ---
 
     public List<IssueDto> findAllDto() {
-        return findAll().stream().map(this::toDto).collect(Collectors.toList());
+        return toDtoList(findAll());
     }
 
     public IssueDto findByIdDto(Long id) {
@@ -82,7 +88,7 @@ public class IssueService {
     }
 
     public List<IssueDto> findByTagNameDto(String tagName) {
-        return findByTagName(tagName).stream().map(this::toDto).collect(Collectors.toList());
+        return toDtoList(findByTagName(tagName));
     }
 
     /**
@@ -97,7 +103,7 @@ public class IssueService {
         }
         String email = auth.getName();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new NoSuchElementException("Utente non trovato: " + email));
-        return issueRepository.findByAssignee_Id(user.getId()).stream().map(this::toDto).collect(Collectors.toList());
+        return toDtoList(issueRepository.findByAssignee_Id(user.getId()));
     }
 
     @Transactional
@@ -300,8 +306,30 @@ public class IssueService {
         return issueRepository.save(issue);
     }
 
+    // Mapper interno: Lista Entity -> Lista DTO (evita N+1 query per il conteggio commenti)
+    private List<IssueDto> toDtoList(List<Issue> issues) {
+        if (issues.isEmpty()) {
+            return List.of();
+        }
+        List<Long> issueIds = issues.stream()
+                .map(Issue::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> countsByIssueId = new HashMap<>();
+        for (Object[] row : commentRepository.countByIssueIds(issueIds)) {
+            countsByIssueId.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+        return issues.stream()
+                .map(issue -> toDto(issue, countsByIssueId.getOrDefault(issue.getId(), 0L)))
+                .collect(Collectors.toList());
+    }
+
     // Mapper interno: Entity -> DTO
     private IssueDto toDto(Issue i) {
+        long commentsCount = (i.getId() != null) ? commentRepository.countByIssueId(i.getId()) : 0L;
+        return toDto(i, commentsCount);
+    }
+
+    private IssueDto toDto(Issue i, long commentsCount) {
         IssueDto dto = new IssueDto();
         dto.setId(i.getId());
         dto.setTitle(i.getTitle());
@@ -323,6 +351,7 @@ public class IssueService {
         if (i.getTags() != null) {
             dto.setTags(i.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
         }
+        dto.setCommentsCount(commentsCount);
         return dto;
     }
 }
