@@ -23,11 +23,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -84,7 +87,7 @@ public class IssueService {
 
     public IssueDto findByIdDto(Long id) {
         Issue i = findById(id).orElseThrow(NoSuchElementException::new);
-        return toDto(i);
+        return toDto(i, true);
     }
 
     public List<IssueDto> findByTagNameDto(String tagName) {
@@ -155,50 +158,76 @@ public class IssueService {
         }
 
         Issue saved = issueRepository.save(i);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
     @Transactional
     public IssueDto updateIssue(Long id, IssueUpdateDto dto, byte[] imageBytes) {
         Issue existing = issueRepository.findById(id).orElseThrow(NoSuchElementException::new);
 
-        existing.setTitle(dto.getTitle());
+        if (existing.getState() != null && "CLOSED".equals(existing.getState().getStateName())) {
+            throw new IllegalStateException("Impossibile modificare una issue chiusa.");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new AccessDeniedException("Utente non autenticato");
+        }
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+
+        if (!isAdmin) {
+            User currentUser = userRepository.findByEmail(auth.getName())
+                    .orElseThrow(() -> new AccessDeniedException("Utente non trovato"));
+            if (existing.getAssignee() == null || !existing.getAssignee().getId().equals(currentUser.getId())) {
+                throw new AccessDeniedException(
+                        "Solo gli admin o l'utente assegnatario possono modificare questa issue.");
+            }
+        }
+
+        existing.setTitle(dto.getTitle().trim());
         existing.setDescription(dto.getDescription());
-        existing.setIsUrgent(dto.getIsUrgent());
+        existing.setIsUrgent(Boolean.TRUE.equals(dto.getIsUrgent()));
         existing.setType(dto.getType());
 
         if (dto.getAssigneeId() != null) {
-            // Solo gli ADMIN possono assegnare una issue
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            boolean isAdmin = auth != null && auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                throw new AccessDeniedException("Solo gli ADMIN possono assegnare una issue");
+            Long currentAssigneeId = existing.getAssignee() != null ? existing.getAssignee().getId() : null;
+            if (!dto.getAssigneeId().equals(currentAssigneeId)) {
+                if (!isAdmin) {
+                    throw new AccessDeniedException("Solo gli ADMIN possono assegnare o riassegnare una issue");
+                }
+                User assignee = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
+                if (existing.getAssignee() == null) {
+                    existing.assignTo(assignee);
+                } else {
+                    existing.setAssignee(assignee);
+                }
             }
-            User assignee = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
-            // Usa la state machine: TODO -> IN_PROGRESS
-            existing.assignTo(assignee);
-        } else {
-            existing.setAssignee(null);
         }
 
         if (dto.getTagNames() != null) {
             List<Tag> tags = new ArrayList<>();
-            for (String n : dto.getTagNames()) {
-                Tag t = tagRepository.findByName(n).orElseGet(() -> tagRepository.save(new Tag(null, n, null, null)));
+            Set<String> seenTags = new HashSet<>();
+            for (String rawName : dto.getTagNames()) {
+                if (rawName == null) continue;
+                String cleanName = rawName.trim().toLowerCase().replaceAll("^#", "");
+                if (cleanName.isEmpty() || !seenTags.add(cleanName)) continue;
+                Tag t = tagRepository.findByName(cleanName)
+                        .orElseGet(() -> tagRepository.save(new Tag(null, cleanName, null, null)));
                 tags.add(t);
             }
             existing.setTags(tags);
-        } else {
-            existing.setTags(null);
         }
 
-        if (imageBytes != null) {
+        if (imageBytes != null && imageBytes.length > 0) {
             existing.setImage(imageBytes);
+        } else if (Boolean.TRUE.equals(dto.getRemoveImage())) {
+            existing.setImage(null);
         }
 
         Issue saved = issueRepository.save(existing);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
 
@@ -215,7 +244,7 @@ public class IssueService {
         User user = userRepository.findById(dto.getAssigneeId()).orElseThrow(NoSuchElementException::new);
         issue.assignTo(user);
         Issue saved = issueRepository.save(issue);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
 
@@ -225,7 +254,7 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId).orElseThrow(NoSuchElementException::new);
         issue.close();
         Issue saved = issueRepository.save(issue);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
     /**
@@ -258,7 +287,7 @@ public class IssueService {
 
         issue.sendToReview();
         Issue saved = issueRepository.save(issue);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
 
@@ -272,7 +301,7 @@ public class IssueService {
         Issue issue = issueRepository.findById(issueId).orElseThrow(NoSuchElementException::new);
         issue.sendBackToProgress();
         Issue saved = issueRepository.save(issue);
-        return toDto(saved);
+        return toDto(saved, true);
     }
 
     
@@ -319,17 +348,17 @@ public class IssueService {
             countsByIssueId.put((Long) row[0], ((Number) row[1]).longValue());
         }
         return issues.stream()
-                .map(issue -> toDto(issue, countsByIssueId.getOrDefault(issue.getId(), 0L)))
+                .map(issue -> toDto(issue, countsByIssueId.getOrDefault(issue.getId(), 0L), false))
                 .collect(Collectors.toList());
     }
 
     // Mapper interno: Entity -> DTO
-    private IssueDto toDto(Issue i) {
+    private IssueDto toDto(Issue i, boolean includeImage) {
         long commentsCount = (i.getId() != null) ? commentRepository.countByIssueId(i.getId()) : 0L;
-        return toDto(i, commentsCount);
+        return toDto(i, commentsCount, includeImage);
     }
 
-    private IssueDto toDto(Issue i, long commentsCount) {
+    private IssueDto toDto(Issue i, long commentsCount, boolean includeImage) {
         IssueDto dto = new IssueDto();
         dto.setId(i.getId());
         dto.setTitle(i.getTitle());
@@ -352,6 +381,11 @@ public class IssueService {
             dto.setTags(i.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
         }
         dto.setCommentsCount(commentsCount);
+        boolean hasImg = i.getImage() != null && i.getImage().length > 0;
+        dto.setHasImage(hasImg);
+        if (includeImage && hasImg) {
+            dto.setImageBase64(Base64.getEncoder().encodeToString(i.getImage()));
+        }
         return dto;
     }
 }

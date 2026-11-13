@@ -28,4 +28,6 @@ public class IssueUpdateDto {
 
     private List<String> tagNames;
 
+    private Boolean removeImage = false;
+
 }

@@ -27,4 +27,6 @@ public class IssueDto {
     private String assigneeFullName;
     private List<String> tags;
     private Long commentsCount;
+    private Boolean hasImage;
+    private String imageBase64;
 }
