@@ -14,7 +14,7 @@ import java.util.List;
 @Table(name = "issues")
 @org.hibernate.annotations.Check(
     name = "chk_assignee_state",
-    constraints = "assignee_id IS NULL OR state IN ('IN_PROGRESS', 'IN_REVIEW')"
+    constraints = "assignee_id IS NULL OR state IN ('IN_PROGRESS', 'IN_REVIEW', 'CLOSED')"
 )
 @Data
 @NoArgsConstructor
