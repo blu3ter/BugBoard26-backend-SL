@@ -65,3 +65,33 @@ Per avviare il progetto:
 spring.datasource.password=<password-del-database>
 jwt.secret=<chiave-segreta-lunga-per-i-jwt>
 ```
+
+## 🐳 Avvio con Docker Compose
+
+L'intero stack del progetto (**Database PostgreSQL**, **Backend Spring Boot** e **Frontend React/Nginx**) è orchestrato tramite **Docker Compose** mediante il file `docker-compose.yml` presente nella cartella principale del workspace (allo stesso livello di `BugBoard26-backend-SL` e `bugboard26-frontend-LS`).
+
+### Configurazione iniziale
+Prima del primo avvio, crea il file `.env` nella cartella contenente `docker-compose.yml` a partire dal modello `.env.example` e imposta le tue credenziali (`POSTGRES_PASSWORD`, `JWT_SECRET`, ecc.):
+
+```bash
+cp .env.example .env
+```
+
+*(Assicurati inoltre che la porta `5432` non sia già occupata da un'istanza locale di PostgreSQL).*
+
+### Comandi principali
+
+- **Avviare con build** (al primo avvio, dopo aver cambiato branch o modificato codice/configurazione):
+  ```bash
+  docker compose up --build -d
+  ```
+
+- **Avviare** (quando le immagini sono già state compilate):
+  ```bash
+  docker compose up -d
+  ```
+
+- **Spegnere i container** (mantenendo i dati salvati nel database):
+  ```bash
+  docker compose down
+  ```
