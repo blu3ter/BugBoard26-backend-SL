@@ -95,3 +95,10 @@ cp .env.example .env
   ```bash
   docker compose down
   ```
+
+
+
+
+### TEST 
+
+Per eseguire i test della issue , avvia : mvn test -Dtest=IssueServiceTest

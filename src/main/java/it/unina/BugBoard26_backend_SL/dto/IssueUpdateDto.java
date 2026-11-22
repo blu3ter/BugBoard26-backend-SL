@@ -8,26 +8,22 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class IssueUpdateDto {
 
-    @NotBlank
-    private String title;
+  @NotBlank private String title;
 
-    private String description;
+  private String description;
 
-    private Boolean isUrgent = false;
+  private Boolean isUrgent = false;
 
-    @NotNull
-    private IssueType type;
+  @NotNull private IssueType type;
 
-    private Long assigneeId;
+  private Long assigneeId;
 
-    private List<String> tagNames;
+  private List<String> tagNames;
 
-    private Boolean removeImage = false;
-
+  private Boolean removeImage = false;
 }
